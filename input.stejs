@@ -1,0 +1,17 @@
+<html>
+    <body>
+        <h1>$myVar$</h1>
+
+        $for item of myList$
+        <div>
+            $item$
+        </div>
+        $efor$
+
+        $if myVar == 'henlo'$
+        <span>
+            hi!
+        </span>
+        $fi$
+    </body>
+</html>
