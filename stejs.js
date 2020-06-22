@@ -158,9 +158,16 @@ function executeFragments(fragments, context)
         if(fragment.type == 'for')
         {
             const iterable = execExprInContext(fragment.value.iterable, context);
-            for(const x of iterable)
+            for(const x in iterable)
             {
-                context[fragment.value.varName] = x;
+                if(fragment.value.forType == 'in')
+                {
+                    context[fragment.value.varName] = x;
+                }
+                else
+                {
+                    context[fragment.value.varName] = iterable[x];
+                }
                 fragments.splice(i, 1, ...executeFragments(fragment.children, context));
             }
 

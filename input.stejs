@@ -1,17 +1,13 @@
-<html>
-    <body>
-        <h1>$myVar$</h1>
+$myVar$
 
-        $for item of myList$
-        <div>
-            $item$
-        </div>
-        $efor$
+$for item of myList$
+    $item$
+$efor$
 
-        $if myVar == 'henlo'$
-        <span>
-            hi!
-        </span>
-        $fi$
-    </body>
-</html>
+$for i in myList$
+    $myList[i]$
+$efor$
+
+$if myVar == 'henlo'$
+    hi!
+$fi$
