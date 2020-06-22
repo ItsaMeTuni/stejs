@@ -24,7 +24,7 @@ Only for loops (for in or for of) and ifs are supported at the moment.
 
 ```
 const fs = require('fs');
-const stejs = require('./stejs');
+const stejs = require('stejs');
 
 const inputStr = fs.readFileSync(__dirname + '/input.stejs').toString();
 const context = {
