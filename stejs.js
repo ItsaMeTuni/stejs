@@ -1,4 +1,3 @@
-const fs = require('fs');
 const cloneDeep = require('clone-deep');
 
 class Fragment
@@ -14,16 +13,16 @@ class Fragment
     }
 }
 
-const input = fs.readFileSync(__dirname + '/input.stejs').toString();
+function runEngine(input, context)
+{
+    let allFragments = extractFragments(input);
+    allFragments = classifyFragments(allFragments);
+    allFragments = createFragmentRelations(allFragments).result;
+    allFragments = executeFragments(allFragments, context);
 
-let allFragments = extractFragments(input);
-allFragments = classifyFragments(allFragments);
-allFragments = createFragmentRelations(allFragments).result;
-allFragments = executeFragments(allFragments, {myVar: 'henlo', myList: ['wussup']});
-
-const out = constructOutput(allFragments);
-console.log(out);
-
+    const out = constructOutput(allFragments);
+    return out;
+}
 
 function classifyFragments(fragments)
 {
@@ -145,14 +144,19 @@ function executeFragments(fragments, context)
 {
     fragments = cloneDeep(fragments);
 
+    const result = [];
+
     for(let i = 0; i < fragments.length; i++)
     {
         const fragment = fragments[i];
         
         if(fragment.type == 'expression')
         {
-            fragment.type = 'text';
-            fragment.value = execExprInContext(fragment.value, context);
+            const textFragment = new Fragment();
+            textFragment.type = 'text';
+            textFragment.value = execExprInContext(fragment.value, context);
+
+            result.push(textFragment);
         }
 
         if(fragment.type == 'for')
@@ -167,10 +171,10 @@ function executeFragments(fragments, context)
                 else
                 {
                     context[fragment.value.varName] = iterable[x];
+                    
                 }
-                fragments.splice(i, 1, ...executeFragments(fragment.children, context));
+                result.push(...executeFragments(fragment.children, context));
             }
-
             context[fragment.value.varName] = undefined;
         }
 
@@ -179,16 +183,17 @@ function executeFragments(fragments, context)
             const exprResult = execExprInContext(fragment.value, context);
             if(exprResult)
             {
-                fragments.splice(i, 1, ...executeFragments(fragment.children, context));
+                result.push(...executeFragments(fragment.children, context));
             }
-            else
-            {
-                fragments.splice(i, 1);
-            }
+        }
+
+        if(fragment.type == 'text')
+        {
+            result.push(fragment);
         }
     }
 
-    return fragments;
+    return result;
 }
 
 function execExprInContext(exprStr, context)
@@ -223,15 +228,33 @@ function extractFragments(str)
 {
     let results = [];
     
-    const regex = /\$(.*)\$/gm;
-
-    do
+    let lookingForClosingTag = false;
+    for(let i = 0; i < str.length; i++)
     {
-        results.push(regex.exec(str));
-    }
-    while(results[results.length - 1])
+        if(str[i] == '$')
+        {
+            if(lookingForClosingTag)
+            {
+                const lastMatch = results[results.length - 1];
+                lastMatch.fullMatch = str.substring(lastMatch.index, i + 1);
+                lastMatch.content = str.substring(lastMatch.index + 1, i);
+                lookingForClosingTag = false;
+            }
+            else
+            {
+                results.push({
+                    index: i,
+                });
 
-    results = results.splice(0, results.length - 1);
+                lookingForClosingTag = true;
+            }
+        }
+    }
+
+    if(lookingForClosingTag)
+    {
+        console.error('Missing tag end character $');
+    }
 
     const firstFragment = new Fragment();
     firstFragment.type = 'text';
@@ -249,19 +272,21 @@ function extractFragments(str)
         if(results[i+1] != null)
         {
             
-            textFragment.value = str.substring(results[i].index + results[i][0].length, results[i+1].index);
+            textFragment.value = str.substring(results[i].index + results[i].fullMatch.length, results[i+1].index);
             results.splice(i+1, 0, textFragment);
         }
         else
         {
-            textFragment.value = str.substring(results[i].index + results[i][0].length, str.length);
+            textFragment.value = str.substring(results[i].index + results[i].fullMatch.length, str.length);
             results.push(textFragment);
         }
 
         const frag = new Fragment();
-        frag.value = results[i][1];
+        frag.value = results[i].content;
         results[i] = frag;
     }
 
     return results;
 }
+
+module.exports = runEngine;

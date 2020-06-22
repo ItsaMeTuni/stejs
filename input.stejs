@@ -1,13 +1,13 @@
 $myVar$
 
 $for item of myList$
-    $item$
+$item$
 $efor$
 
 $for i in myList$
-    $myList[i]$
+$i$ -> $myList[i]$
 $efor$
 
 $if myVar == 'henlo'$
-    hi!
+hi!
 $fi$
