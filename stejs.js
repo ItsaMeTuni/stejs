@@ -1,4 +1,6 @@
 const cloneDeep = require('clone-deep');
+const Path = require('path');
+const fs = require('fs');
 
 class Fragment
 {
@@ -12,6 +14,16 @@ class Fragment
         this.parent = null;
     }
 }
+
+const contextUtils = {
+    include(context, relativePath)
+    {
+        const path = Path.resolve(__dirname, relativePath);
+        const str = fs.readFileSync(path).toString();
+    
+        return runEngine(str, context);
+    },
+};
 
 function runEngine(input, context)
 {
@@ -36,7 +48,7 @@ function classifyFragments(fragments)
         }
 
         //for in/of
-        const forloop = /^ *for *(\S*) *(in|of) *(\S*)$/gm.exec(fragment.value);
+        const forloop = /^ *for *(\S*) *(in|of) +(.*)$/gm.exec(fragment.value);
         if(forloop)
         {   
             fragment.type = 'for';
@@ -144,6 +156,26 @@ function executeFragments(fragments, context)
 {
     fragments = cloneDeep(fragments);
 
+    //Create a circular ref so we can access the context
+    //object in contextUtils functions (or, if for some reason
+    //we need to, access it in the template)
+    context.__context__ = context;
+
+    //Add stuff from contextUtils to context
+    for(const name in contextUtils)
+    {
+        if(typeof contextUtils[name] == 'function')
+        {
+            //contextUtils functions have a context parameter, so we bind it here
+            //so that we don't need to do that in the template
+            context[name] = (...x) => contextUtils[name].bind(null, context, ...x)();
+        }
+        else
+        {
+            context[name] = contextUtils[name];
+        }
+    }
+
     const result = [];
 
     for(let i = 0; i < fragments.length; i++)
@@ -191,6 +223,13 @@ function executeFragments(fragments, context)
         {
             result.push(fragment);
         }
+    }
+
+    context.__context__ = undefined;
+
+    for(const name in contextUtils)
+    {
+        context[name] = undefined;
     }
 
     return result;
