@@ -292,12 +292,19 @@ function extractFragments(str)
 
     if(lookingForClosingTag)
     {
-        console.error('Missing tag end character $');
+        throw new Error('Missing tag end character $');
     }
 
     const firstFragment = new Fragment();
     firstFragment.type = 'text';
-    firstFragment.value = str.substring(0, results[0].index);
+    if(results.length > 0)
+    {
+        firstFragment.value = str.substring(0, results[0].index);
+    }
+    else
+    {
+        firstFragment.value = str;
+    }
 
     results.splice(0, 0, firstFragment);
 

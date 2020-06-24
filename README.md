@@ -1,5 +1,6 @@
 # STEJS - Simple Template Engine for JavaScript
 
+There is a webpack loader for this: [stejs-loader](https://github.com/ItsaMeTuni/stejs-loader.git).
 
 Syntax example:
 ```
