@@ -1,5 +1,7 @@
 # STEJS - Simple Template Engine for JavaScript
 
+`npm install --save stejs`
+
 There is a webpack loader for this: [stejs-loader](https://github.com/ItsaMeTuni/stejs-loader.git).
 
 Syntax example:
