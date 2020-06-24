@@ -10,5 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "clone-deep": "^4.0.1"
+  },
+  "devDependencies": {
+    "ava": "^3.9.0"
   }
 }
