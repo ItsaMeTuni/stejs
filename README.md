@@ -4,6 +4,8 @@
 
 There is a webpack loader for this: [stejs-loader](https://github.com/ItsaMeTuni/stejs-loader.git).
 
+You feed it a template, a context object with variables you want to access in your template and you get a processed file. Simple as that.
+
 ## Usage
 
 ```js
@@ -72,12 +74,26 @@ Expressions in STEJS are evaluated and the result is converted to a string and p
 
 Template:
 ```html
-<h1>$ 1 + 2 + 3 * 5$</h1>
+<span>$post.publishDate$</span>
+<span>$post.getAuthor().name$</span>
+<span>$5 + 2$</span>
+```
+
+Context:
+```js
+{
+    post: {
+        publishDate: '2020-06-24',
+        getAuthor() { /*Some code and stuff */},
+    }
+}
 ```
 
 Output:
 ```html
-<h1>18</h1>
+<span>2020-06-24</span>
+<span>ItsaMeTuni</span>
+<span>7</span>
 ```
 
 ### For loops
