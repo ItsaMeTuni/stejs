@@ -6,7 +6,7 @@ There is a webpack loader for this: [stejs-loader](https://github.com/ItsaMeTuni
 
 ## Usage
 
-```
+```js
 const fs = require('fs');
 const stejs = require('stejs');
 
@@ -20,7 +20,7 @@ const output = stejs(inputStr, context);
 console.log(output);
 ```
 
-input.txt:
+`input.txt`:
 ```
 $myVar$
 
