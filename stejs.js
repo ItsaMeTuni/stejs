@@ -52,9 +52,7 @@ const contextUtils =
  */
 function processTemplateSingle(template, context)
 {
-    let fragments = extractFragments(template);
-    fragments = classifyFragments(fragments);
-    fragments = createFragmentRelations(fragments).result;
+    let fragments = compileTemplate(template);
 
     context = addUtilsToContext(context, contextUtils);
 
@@ -76,9 +74,7 @@ function processTemplateSingle(template, context)
  */
 function processTemplateMany(template, contexts)
 {
-    let fragments = extractFragments(template);
-    fragments = classifyFragments(fragments);
-    fragments = createFragmentRelations(fragments).result;
+    let fragments = compileTemplate(template);
    
     if (typeof contexts != 'array')
     {
@@ -101,6 +97,20 @@ function processTemplateMany(template, contexts)
     }
 
     return outputs;
+}
+
+/**
+ * Compiles a template into an array of fragments
+ * @param {String} template template string to compile
+ * @returns {Fragment[]} array of fragments representing the compiled template
+ */
+function compileTemplate(template)
+{
+    let fragments = extractFragments(template);
+    fragments = classifyFragments(fragments);
+    fragments = createFragmentRelations(fragments).result;
+
+    return fragments;
 }
 
 /**
