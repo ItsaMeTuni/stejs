@@ -25,8 +25,8 @@ class Fragment
 class CompiledTemplate
 {
     /**
-     * 
-     * @param {Fragment[]} fragments 
+     * @param {Fragment[]} fragments
+     * @param {String} source
      */
     constructor(fragments, source)
     {
@@ -435,6 +435,11 @@ function extractFragments(str)
 {
     let results = [];
     
+    if(str.length == 0)
+    {
+        return [];
+    }
+
     let lookingForClosingTag = false;
     for(let i = 0; i < str.length; i++)
     {
@@ -506,4 +511,5 @@ function extractFragments(str)
 module.exports = { 
     processTemplateSingle,
     processTemplateMany,
+    compileTemplate,
 };
