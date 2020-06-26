@@ -8,7 +8,7 @@ const errors = require('../errors');
 
 test('Fragment extraction', t =>
 {
-    const template = fs.readFileSync(path.resolve(__dirname, 'test-template.html')).toString();
+    const template = fs.readFileSync(path.resolve(__dirname, 'compilation-test-template.html')).toString();
 
     const fragments = stejs.__get__('extractFragments')(template);
 
