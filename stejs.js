@@ -44,24 +44,63 @@ const contextUtils =
 };
 
 /**
- * Processes an input string with STEJS,
- * @param {String} input a string containing a STEJS template
+ * Processes an input string with STEJS.
+ * @param {String} template a string containing a STEJS template
  * @param {Object} context a context object with any variables you want to access
  * from within the template
  * @returns {String} the processed template
  */
-function processTemplate(input, context)
+function processTemplateSingle(template, context)
 {
-    let allFragments = extractFragments(input);
-    allFragments = classifyFragments(allFragments);
-    allFragments = createFragmentRelations(allFragments).result;
+    let fragments = extractFragments(template);
+    fragments = classifyFragments(fragments);
+    fragments = createFragmentRelations(fragments).result;
 
     context = addUtilsToContext(context, contextUtils);
 
-    allFragments = executeFragments(allFragments, context);
+    fragments = executeFragments(fragments, context);
 
-    const out = constructOutput(allFragments);
+    const out = constructOutput(fragments);
     return out;
+}
+
+/**
+ * Processes an input string with STEJS multiple times. Use this if you have
+ * a single template that needs to generate more than one page, as this method will
+ * compile the template once and execute it with many contexts.
+ * @param {String} template a string containing a STEJS template
+ * @param {Object[]} contexts an array of context objects with any variables you want to access
+ * from within the template
+ * @returns {String[]} an array of versions of the processed template, each with its
+ * own context and in the same order as the contexts parameter
+ */
+function processTemplateMany(template, contexts)
+{
+    let fragments = extractFragments(template);
+    fragments = classifyFragments(fragments);
+    fragments = createFragmentRelations(fragments).result;
+   
+    if (typeof contexts != 'array')
+    {
+        throw new Error('Context must be an array of objects!');
+    }
+
+    const outputs = [];
+
+    for(const i in contexts)
+    {
+        if(typeof contexts[i] != 'object')
+        {
+            throw new Error('Context must be an array of objects!');
+        }
+
+        contexts[i] = addUtilsToContext(contexts[i], contextUtils);
+        const executedFragments = executeFragments(fragments, contexts[i]);
+
+        outputs.push(constructOutput(executedFragments));
+    }
+
+    return outputs;
 }
 
 /**
@@ -409,4 +448,7 @@ function extractFragments(str)
     return results;
 }
 
-module.exports = processTemplate;
+module.exports = { 
+    processTemplateSingle,
+    processTemplateMany,
+};
