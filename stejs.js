@@ -20,6 +20,25 @@ class Fragment
 }
 
 /**
+ * Represents a compiled template.
+ */
+class CompiledTemplate
+{
+    /**
+     * 
+     * @param {Fragment[]} fragments 
+     */
+    constructor(fragments, source)
+    {
+        /** @type {Fragment[]} */
+        this.fragments = fragments;
+
+        /** @type {String} the template string that was compiled into this object */
+        this.source = source;
+    }
+}
+
+/**
  * Some utility functions and values that can be used in the templates.
  * The first argument of functions are the context, which is bound to calls to them
  * automatically by stejs. See {@link addUtilsToContext}.
@@ -45,14 +64,27 @@ const contextUtils =
 
 /**
  * Processes an input string with STEJS.
- * @param {String} template a string containing a STEJS template
+ * @param {String | CompiledTemplate} template a template string or a CompiledTemplate
  * @param {Object} context a context object with any variables you want to access
  * from within the template
  * @returns {String} the processed template
  */
 function processTemplateSingle(template, context)
 {
-    let fragments = compileTemplate(template);
+    let fragments;
+
+    if(typeof template == 'string')
+    {
+        fragments = compileTemplate(template).fragments;
+    }
+    else if (template instanceof CompiledTemplate)
+    {
+        fragments = template.fragments;
+    }
+    else
+    {
+        throw new Error('template must be either a CompiledTemplate or a template string!');
+    }
 
     context = addUtilsToContext(context, contextUtils);
 
@@ -66,7 +98,7 @@ function processTemplateSingle(template, context)
  * Processes an input string with STEJS multiple times. Use this if you have
  * a single template that needs to generate more than one page, as this method will
  * compile the template once and execute it with many contexts.
- * @param {String} template a string containing a STEJS template
+ * @param {String | CompiledTemplate} template a template string or a CompiledTemplate to process
  * @param {Object[]} contexts an array of context objects with any variables you want to access
  * from within the template
  * @returns {String[]} an array of versions of the processed template, each with its
@@ -74,8 +106,21 @@ function processTemplateSingle(template, context)
  */
 function processTemplateMany(template, contexts)
 {
-    let fragments = compileTemplate(template);
+    let fragments = template;
    
+    if(typeof template == 'string')
+    {
+        fragments = compileTemplate(template).fragments;
+    }
+    else if (template instanceof CompiledTemplate)
+    {
+        fragments = template.fragments;
+    }
+    else
+    {
+        throw new Error('template must be either a CompiledTemplate or a template string!');
+    }
+
     if (typeof contexts != 'array')
     {
         throw new Error('Context must be an array of objects!');
@@ -102,7 +147,7 @@ function processTemplateMany(template, contexts)
 /**
  * Compiles a template into an array of fragments
  * @param {String} template template string to compile
- * @returns {Fragment[]} array of fragments representing the compiled template
+ * @returns {CompiledTemplate} array of fragments representing the compiled template
  */
 function compileTemplate(template)
 {
@@ -110,7 +155,7 @@ function compileTemplate(template)
     fragments = classifyFragments(fragments);
     fragments = createFragmentRelations(fragments).result;
 
-    return fragments;
+    return new CompiledTemplate(fragments, template);
 }
 
 /**
