@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const stejs = rewire('../stejs');
+const errors = require('../errors');
 
 test('Fragment extraction', t =>
 {
@@ -84,4 +85,15 @@ test('Fragment extraction empty template', t =>
     const fragments = stejs.__get__('extractFragments')('');
 
     t.deepEqual(fragments, []);
+});
+
+test('Missing tag terminator', t =>
+{
+    t.throws(() =>
+    {
+        stejs.__get__('extractFragments')('<html>$myVar </html>');
+    },
+    {
+        instanceOf: errors.UnclosedTagError,
+    });
 });

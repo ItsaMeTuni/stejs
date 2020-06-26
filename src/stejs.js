@@ -1,6 +1,7 @@
 const cloneDeep = require('clone-deep');
 const Path = require('path');
 const fs = require('fs');
+const errors = require('./errors');
 
 /**
  * Defines a fragment of a template. This is used to break a template
@@ -465,7 +466,7 @@ function extractFragments(str)
 
     if(lookingForClosingTag)
     {
-        throw new Error('Missing tag end character $');
+        throw new errors.UnclosedTagError('Missing tag end character $');
     }
 
     const firstFragment = new Fragment();
