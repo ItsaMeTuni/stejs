@@ -39,6 +39,30 @@ class CompiledTemplate
     }
 }
 
+class FragmentRelationsRecursionPayload
+{
+    constructor(obj)
+    {
+        /** @type {String} */
+        this.endFragmentToSearchFor;
+
+        /** @type {Fragment} */
+        this.parent;
+    }
+}
+
+class FragmentRelationsReturn
+{
+    constructor(obj)
+    {
+        /** @type {Fragment[]} */
+        this.fragments;
+
+        /** @type {Boolean} */
+        this.foundEndFragment;
+    }
+}
+
 /**
  * Some utility functions and values that can be used in the templates.
  * The first argument of functions are the context, which is bound to calls to them
@@ -154,7 +178,7 @@ function compileTemplate(template)
 {
     let fragments = extractFragments(template);
     fragments = classifyFragments(fragments);
-    fragments = createFragmentRelations(fragments).result;
+    fragments = createFragmentRelations(fragments);
 
     return new CompiledTemplate(fragments, template);
 }
@@ -233,12 +257,20 @@ function classifyFragments(fragments)
 /**
  * Configures relationships between fragments. E.g. all fragments
  * between a 'for' fragment and an 'efor' fragment are all moved into
- * the children field of the for fragment (and the 'efor' fragment is destroyed).
+ * the children field of the 'for' fragment (and the 'efor' fragment is destroyed).
  * @param {Fragment[]} fragments Array of fragments to analyze and configure the relationships
- * @param {String} stopFragment A fragment type on which this search should stop and return. Do not use this parameter,
- * it exists for recursion purposes.
  */
-function createFragmentRelations(fragments, stopFragment = null)
+function createFragmentRelations(fragments)
+{
+    return _createFragmentRelations(fragments).fragments;
+}
+
+/**
+ * @param {Fragment[]} fragments Fragments to figure out the relationships
+ * @param {FragmentRelationsRecursionPayload} recursionPayload
+ * @returns {FragmentRelationsReturn}
+ */
+function _createFragmentRelations(fragments, recursionPayload = null)
 {
     const result = [];
     fragments = cloneDeep(fragments);
@@ -262,34 +294,37 @@ function createFragmentRelations(fragments, stopFragment = null)
 
             //Get all fragments until next efor tag and set them as
             //this fragment's children
-            const subresult = createFragmentRelations(fragments.slice(1), endTag);
-            if(subresult.foundStopFrag)
+            const subresult = _createFragmentRelations(fragments.slice(1), {
+                parentFragment: fragment,
+                endFragmentToSearchFor: endTag,
+            });
+            if(subresult.foundEndFragment)
             {
                 fragment.children.push(...subresult.result);
 
                 //Remove all found children + end tag from the fragments array so we don't
-                //loop over them (end tag is not returned by createFragmentRelations, but we know
+                //loop over them (end tag is not returned by _createFragmentRelations, but we know
                 //it's the next element in the fragments array, so just add 1 to the amount of elements
                 //to remove)
                 fragments.splice(1, subresult.result.length + 1);
             }
             else
             {
-                console.error('didnt find an end tag for tag of type: ', fragment.type);
+                throw new errors.MissingEndTagError(parentFragment, recursionPayload.endFragmentToSearchFor);
             }
         }
 
         fragments.splice(0, 1);
 
-        if(fragment.type == stopFragment)
+        if(fragment.type == recursionPayload.endFragmentToSearchFor)
         {
-            return {result, foundStopFrag: true};
+            return {fragments: result, foundEndFragment: true};
         }
 
         result.push(fragment);
     }
 
-    return {result, foundStopFrag: false};
+    return {fragments: result, foundEndFragment: false};
 }
 
 /**
