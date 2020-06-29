@@ -91,9 +91,26 @@ test('Missing tag terminator', t =>
 {
     t.throws(() =>
     {
-        stejs.__get__('extractFragments')('<html>$myVar </html>');
+        stejs.__get__('extractFragments')('$myVar');
     },
     {
         instanceOf: errors.UnclosedTagError,
+    });
+});
+
+test('Missing end tag', t =>
+{
+    t.throws(() =>
+    {
+        const fragments =  [
+            {
+                type: 'if',
+                value: 'false == true',
+            },
+        ];
+        stejs.__get__('createFragmentRelations')(fragments);
+    },
+    {
+        instanceOf: errors.MissingEndTagError,
     });
 });

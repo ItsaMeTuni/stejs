@@ -45,9 +45,6 @@ class FragmentRelationsRecursionPayload
     {
         /** @type {String} */
         this.endFragmentToSearchFor;
-
-        /** @type {Fragment} */
-        this.parent;
     }
 }
 
@@ -295,7 +292,6 @@ function _createFragmentRelations(fragments, recursionPayload = null)
             //Get all fragments until next efor tag and set them as
             //this fragment's children
             const subresult = _createFragmentRelations(fragments.slice(1), {
-                parentFragment: fragment,
                 endFragmentToSearchFor: endTag,
             });
             if(subresult.foundEndFragment)
@@ -310,7 +306,7 @@ function _createFragmentRelations(fragments, recursionPayload = null)
             }
             else
             {
-                throw new errors.MissingEndTagError(parentFragment, recursionPayload.endFragmentToSearchFor);
+                throw new errors.MissingEndTagError(fragment);
             }
         }
 
