@@ -30,7 +30,24 @@ class MissingEndTagError extends StejsError
     }
 }
 
-
+/**
+ * Returns a string with a formatted error message along with a code snipped
+ * indicating what originated the error.
+ * 
+ * Example:
+ * message = 'An error occurred in this line'
+ * tagIndexInSource = Index of the $ character in sourceTemplate
+ * 
+ * Output:
+ * An error occurred in this line:
+ * 72  |  <span>$an unclosed tag</span>
+ *              ^
+ * 
+ * @param {String} message The message containing a description of the error
+ * @param {Number} tagIndexInSource The position of the tag that caused the error
+ * in the sourceTemplate string.
+ * @param {String} sourceTemplate The source of the template that caused the error
+ */
 function makeErrorMessage(message, tagIndexInSource, sourceTemplate)
 {
     let {lineNumber, lineText, indexInLineText} = utils.getLineForIndex(tagIndexInSource, sourceTemplate);
