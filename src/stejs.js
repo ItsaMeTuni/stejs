@@ -480,6 +480,14 @@ function extractFragments(str)
     let lookingForClosingTag = false;
     for(let i = 0; i < str.length; i++)
     {
+        if(lookingForClosingTag && str[i] == '\n')
+        {
+            //Missing $ character to close the current tag. Breaking
+            //the loop now will trigger an error throw a few lines down
+            //because lookingForClosingTag will still be true
+            break;
+        }
+
         if(str[i] == '$')
         {
             if(lookingForClosingTag)
@@ -502,7 +510,7 @@ function extractFragments(str)
 
     if(lookingForClosingTag)
     {
-        throw new errors.UnclosedTagError('Missing tag end character $');
+        throw new errors.UnclosedTagError(results[results.length - 1].index, str);
     }
 
     const firstFragment = new Fragment();
