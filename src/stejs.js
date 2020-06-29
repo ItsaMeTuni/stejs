@@ -175,7 +175,7 @@ function compileTemplate(template)
 {
     let fragments = extractFragments(template);
     fragments = classifyFragments(fragments);
-    fragments = createFragmentRelations(fragments);
+    fragments = createFragmentRelations(fragments, template);
 
     return new CompiledTemplate(fragments, template);
 }
@@ -256,18 +256,22 @@ function classifyFragments(fragments)
  * between a 'for' fragment and an 'efor' fragment are all moved into
  * the children field of the 'for' fragment (and the 'efor' fragment is destroyed).
  * @param {Fragment[]} fragments Array of fragments to analyze and configure the relationships
+ * @param {String} sourceTemplate the template string where the fragments came from, used
+ * to provide helpful error messages
  */
-function createFragmentRelations(fragments)
+function createFragmentRelations(fragments, sourceTemplate)
 {
-    return _createFragmentRelations(fragments).fragments;
+    return _createFragmentRelations(fragments, sourceTemplate).fragments;
 }
 
 /**
  * @param {Fragment[]} fragments Fragments to figure out the relationships
+ * @param {String} sourceTemplate the template string where the fragments came from, used
+ * to provide helpful error messages
  * @param {FragmentRelationsRecursionPayload} recursionPayload
  * @returns {FragmentRelationsReturn}
  */
-function _createFragmentRelations(fragments, recursionPayload = null)
+function _createFragmentRelations(fragments, sourceTemplate, recursionPayload = null)
 {
     const result = [];
     fragments = cloneDeep(fragments);
@@ -291,28 +295,29 @@ function _createFragmentRelations(fragments, recursionPayload = null)
 
             //Get all fragments until next efor tag and set them as
             //this fragment's children
-            const subresult = _createFragmentRelations(fragments.slice(1), {
+            const subresult = _createFragmentRelations(fragments.slice(1), sourceTemplate, {
                 endFragmentToSearchFor: endTag,
             });
+
             if(subresult.foundEndFragment)
             {
-                fragment.children.push(...subresult.result);
+                fragment.children.push(...subresult.fragments);
 
                 //Remove all found children + end tag from the fragments array so we don't
                 //loop over them (end tag is not returned by _createFragmentRelations, but we know
                 //it's the next element in the fragments array, so just add 1 to the amount of elements
                 //to remove)
-                fragments.splice(1, subresult.result.length + 1);
+                fragments.splice(1, subresult.fragments.length + 1);
             }
             else
             {
-                throw new errors.MissingEndTagError(fragment);
+                throw new errors.MissingEndTagError(fragment, endTag, sourceTemplate);
             }
         }
 
         fragments.splice(0, 1);
 
-        if(fragment.type == recursionPayload.endFragmentToSearchFor)
+        if(recursionPayload && fragment.type == recursionPayload.endFragmentToSearchFor)
         {
             return {fragments: result, foundEndFragment: true};
         }
@@ -502,6 +507,7 @@ function extractFragments(str)
 
     const firstFragment = new Fragment();
     firstFragment.type = 'text';
+    firstFragment.positionInSource = 0;
     if(results.length > 0)
     {
         firstFragment.value = str.substring(0, results[0].index);
@@ -519,21 +525,24 @@ function extractFragments(str)
     {
         const textFragment = new Fragment();
         textFragment.type = 'text';
+        textFragment.positionInSource = results[i].index + results[i].fullMatch.length;
 
         if(results[i+1] != null)
         {
-            
+            //Set value of textFragment as everything between where this result ends and where the next one starts
             textFragment.value = str.substring(results[i].index + results[i].fullMatch.length, results[i+1].index);
             results.splice(i+1, 0, textFragment);
         }
         else
         {
+            //Set the value of textFragment as everything between where this result ends and the end of str
             textFragment.value = str.substring(results[i].index + results[i].fullMatch.length, str.length);
             results.push(textFragment);
         }
 
         const frag = new Fragment();
         frag.value = results[i].content;
+        frag.positionInSource = results[i].index;
         results[i] = frag;
     }
 

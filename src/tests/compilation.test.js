@@ -108,7 +108,7 @@ test('Missing end tag', t =>
                 value: 'false == true',
             },
         ];
-        stejs.__get__('createFragmentRelations')(fragments);
+        stejs.__get__('createFragmentRelations')(fragments, '$if false == true$');
     },
     {
         instanceOf: errors.MissingEndTagError,
