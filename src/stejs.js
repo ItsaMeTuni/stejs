@@ -80,7 +80,7 @@ const contextUtils =
         const path = Path.resolve(process.cwd(), relativePath);
         const str = fs.readFileSync(path).toString();
     
-        return processTemplateSingle(str, context);
+        return processTemplateSingle(str, context, path);
     },
 };
 
@@ -89,15 +89,18 @@ const contextUtils =
  * @param {String | CompiledTemplate} template a template string or a CompiledTemplate
  * @param {Object} context a context object with any variables you want to access
  * from within the template
+ * @param {String} templatePath path of the template's file, used to provide more
+ * helpful errors. Doesn't need to be a valid path, this is only printed to the console
+ * when an error occurs.
  * @returns {String} the processed template
  */
-function processTemplateSingle(template, context)
+function processTemplateSingle(template, context, templatePath = '')
 {
     let fragments;
 
     if(typeof template == 'string')
     {
-        fragments = compileTemplate(template).fragments;
+        fragments = compileTemplate(template, templatePath).fragments;
     }
     else if (template instanceof CompiledTemplate)
     {
@@ -123,16 +126,19 @@ function processTemplateSingle(template, context)
  * @param {String | CompiledTemplate} template a template string or a CompiledTemplate to process
  * @param {Object[]} contexts an array of context objects with any variables you want to access
  * from within the template
+ * @param {String} templatePath path of the template's file, used to provide more
+ * helpful errors. Doesn't need to be a valid path, this is only printed to the console
+ * when an error occurs.
  * @returns {String[]} an array of versions of the processed template, each with its
  * own context and in the same order as the contexts parameter
  */
-function processTemplateMany(template, contexts)
+function processTemplateMany(template, contexts, templatePath = '')
 {
     let fragments = template;
    
     if(typeof template == 'string')
     {
-        fragments = compileTemplate(template).fragments;
+        fragments = compileTemplate(template, templatePath).fragments;
     }
     else if (template instanceof CompiledTemplate)
     {
@@ -169,13 +175,16 @@ function processTemplateMany(template, contexts)
 /**
  * Compiles a template into an array of fragments
  * @param {String} template template string to compile
+ * @param {String} templatePath path of the template's file, used to provide more
+ * helpful errors. Doesn't need to be a valid path, this is only printed to the console
+ * when an error occurs.
  * @returns {CompiledTemplate} array of fragments representing the compiled template
  */
-function compileTemplate(template)
+function compileTemplate(template, templatePath = '')
 {
-    let fragments = extractFragments(template);
+    let fragments = extractFragments(template, templatePath);
     fragments = classifyFragments(fragments);
-    fragments = createFragmentRelations(fragments, template);
+    fragments = createFragmentRelations(fragments, template, templatePath);
 
     return new CompiledTemplate(fragments, template);
 }
@@ -258,20 +267,26 @@ function classifyFragments(fragments)
  * @param {Fragment[]} fragments Array of fragments to analyze and configure the relationships
  * @param {String} sourceTemplate the template string where the fragments came from, used
  * to provide helpful error messages
+ * @param {String} templatePath path of the template's file, used to provide more
+ * helpful errors. Doesn't need to be a valid path, this is only printed to the console
+ * when an error occurs.
  */
-function createFragmentRelations(fragments, sourceTemplate)
+function createFragmentRelations(fragments, sourceTemplate, templatePath)
 {
-    return _createFragmentRelations(fragments, sourceTemplate).fragments;
+    return _createFragmentRelations(fragments, sourceTemplate, templatePath).fragments;
 }
 
 /**
  * @param {Fragment[]} fragments Fragments to figure out the relationships
  * @param {String} sourceTemplate the template string where the fragments came from, used
  * to provide helpful error messages
+ * @param {String} templatePath path of the template's file, used to provide more
+ * helpful errors. Doesn't need to be a valid path, this is only printed to the console
+ * when an error occurs.
  * @param {FragmentRelationsRecursionPayload} recursionPayload
  * @returns {FragmentRelationsReturn}
  */
-function _createFragmentRelations(fragments, sourceTemplate, recursionPayload = null)
+function _createFragmentRelations(fragments, sourceTemplate, templatePath, recursionPayload = null)
 {
     const result = [];
     fragments = cloneDeep(fragments);
@@ -295,7 +310,7 @@ function _createFragmentRelations(fragments, sourceTemplate, recursionPayload = 
 
             //Get all fragments until next efor tag and set them as
             //this fragment's children
-            const subresult = _createFragmentRelations(fragments.slice(1), sourceTemplate, {
+            const subresult = _createFragmentRelations(fragments.slice(1), sourceTemplate, templatePath, {
                 endFragmentToSearchFor: endTag,
             });
 
@@ -311,7 +326,7 @@ function _createFragmentRelations(fragments, sourceTemplate, recursionPayload = 
             }
             else
             {
-                throw new errors.MissingEndTagError(fragment, endTag, sourceTemplate);
+                throw new errors.MissingEndTagError(fragment, endTag, sourceTemplate, templatePath);
             }
         }
 
@@ -465,10 +480,13 @@ function constructOutput(fragments)
 /**
  * Extract fragments from a string. Tag fragments don't have a specified type,
  * plain text fragments have the text type.
- * @param {String} str 
+ * @param {String} str
+ * @param {String} templatePath path of the template's file, used to provide more
+ * helpful errors. Doesn't need to be a valid path, this is only printed to the console
+ * when an error occurs.
  * @returns {Fragment[]} Array of extracted fragments
  */
-function extractFragments(str)
+function extractFragments(str, templatePath = '')
 {
     let results = [];
     
@@ -510,7 +528,7 @@ function extractFragments(str)
 
     if(lookingForClosingTag)
     {
-        throw new errors.UnclosedTagError(results[results.length - 1].index, str);
+        throw new errors.UnclosedTagError(results[results.length - 1].index, str, templatePath);
     }
 
     const firstFragment = new Fragment();

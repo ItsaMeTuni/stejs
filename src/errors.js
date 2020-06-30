@@ -4,13 +4,14 @@ class StejsError extends Error {}
 
 class UnclosedTagError extends StejsError
 {
-    constructor(tagIndexInSource, sourceTemplate)
+    constructor(tagIndexInSource, sourceTemplate, templatePath)
     {
         super(
             makeErrorMessage(
                 `Missing $ character to close tag opened here`,
                 tagIndexInSource,
                 sourceTemplate,
+                templatePath,
             )
         );
     }
@@ -18,13 +19,14 @@ class UnclosedTagError extends StejsError
 
 class MissingEndTagError extends StejsError
 {
-    constructor(fragment, expectedEndTag, sourceTemplate)
+    constructor(fragment, expectedEndTag, sourceTemplate, templatePath)
     {
         super(
             makeErrorMessage(
                 `Missing expected ${expectedEndTag} tag to close the following ${fragment.type} tag`,
                 fragment.positionInSource,
                 sourceTemplate,
+                templatePath,
             )
         );
     }
@@ -47,8 +49,9 @@ class MissingEndTagError extends StejsError
  * @param {Number} tagIndexInSource The position of the tag that caused the error
  * in the sourceTemplate string.
  * @param {String} sourceTemplate The source of the template that caused the error
+ * @param {String} templatePath path of the template's file, doesn't need to be a valid path
  */
-function makeErrorMessage(message, tagIndexInSource, sourceTemplate)
+function makeErrorMessage(message, tagIndexInSource, sourceTemplate, templatePath = '')
 {
     let {lineNumber, lineText, indexInLineText} = utils.getLineForIndex(tagIndexInSource, sourceTemplate);
 
@@ -56,7 +59,7 @@ function makeErrorMessage(message, tagIndexInSource, sourceTemplate)
     //some spacing for correct text alignment
     lineNumber = lineNumber.toString();
 
-    let msg = `${message}:\n\n${lineNumber}  |  ${lineText}\n`;
+    let msg = `${message}:\n\n${templatePath}\n${lineNumber}  |  ${lineText}\n`;
     
     //Add spaces to msg so that the ^ character aligns with the start of the tag
     //that caused the error.
