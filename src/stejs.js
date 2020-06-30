@@ -77,10 +77,10 @@ const contextUtils =
      */
     include(context, relativePath)
     {
-        const path = Path.resolve(__dirname, relativePath);
+        const path = Path.resolve(process.cwd(), relativePath);
         const str = fs.readFileSync(path).toString();
     
-        return processTemplate(str, context);
+        return processTemplateSingle(str, context);
     },
 };
 
