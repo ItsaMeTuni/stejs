@@ -12,72 +12,63 @@ test('Fragment extraction', t =>
 
     const fragments = stejs.__get__('extractFragments')(template);
 
-    const expectedFragments = [
+    const expectedFragments = intoFragments([
         {
             type: 'text',
             value: '<html>\n    <h1>',
             children: [],
-            parent: null,
+            positionInSource: 0,
         },
         {
             type: '',
             value: 'myVar',
             children: [],
-            parent: null,
+            positionInSource: 15,
         },
         {
             type: 'text',
             value: '</h1>\n    ',
             children: [],
-            parent: null,
+            positionInSource: 22,
         },
         {
             type: '',
             value: 'for i in myArr',
             children: [],
-            parent: null,
+            positionInSource: 32,
         },
         {
             type: 'text',
             value: '\n    <span>',
             children: [],
-            parent: null,
+            positionInSource: 48,
         },
         {
             type: '',
             value: 'i',
             children: [],
-            parent: null,
+            positionInSource: 59,
         },
         {
             type: 'text',
             value: '</span>\n    ',
             children: [],
-            parent: null,
+            positionInSource: 62,
         },
         {
             type: '',
             value: 'efor',
             children: [],
-            parent: null,
+            positionInSource: 74,
         },
         {
             type: 'text',
             value: '\n</html>',
             children: [],
-            parent: null,
+            positionInSource: 80,
         },
-    ];
-
-    for(const i in fragments)
-    {
-        t.truthy(
-            fragments[i].type == expectedFragments[i].text
-            || fragments[i].children == expectedFragments[i].children
-            || fragments[i].value == expectedFragments[i].value
-            || fragments[i].parent == expectedFragments[i].parent
-        );
-    }
+    ]);
+    t.deepEqual(fragments, expectedFragments);
 });
 
 test('Fragment extraction empty template', t =>
@@ -114,3 +105,63 @@ test('Missing end tag', t =>
         instanceOf: errors.MissingEndTagError,
     });
 });
+
+test('Fragment relations', t =>
+{
+    const fragments = intoFragments([
+        {
+            type: 'text',
+            value: 'abcd\n',
+        },
+        {
+            type: 'if',
+            value: 'true == false',
+        },
+        {
+            type: 'text',
+            value: 'efgh\n',
+        },
+        {
+            type: 'fi',
+            value: '',
+        },
+        {
+            type: 'text',
+            value: 'ijkl\n',
+        },
+    ]);
+
+    const result = stejs.__get__('createFragmentRelations')(fragments, '$if false == true$');
+
+    const expectedResult = intoFragments([
+        {
+            type: 'text',
+            value: 'abcd\n',
+        },
+        {
+            type: 'if',
+            value: 'true == false',
+            children: intoFragments([
+                {
+                    type: 'text',
+                    value: 'efgh\n',
+                },
+            ]),
+        },
+        {
+            type: 'text',
+            value: 'ijkl\n',
+        },
+    ]);
+
+
+    t.deepEqual(result, expectedResult);
+});
+
+function intoFragments(arr)
+{
+    const Fragment = stejs.__get__('Fragment');
+    let a = arr.map(x => Object.assign(new Fragment(), x));
+
+    return a;
+}

@@ -16,7 +16,6 @@ class Fragment
         this.type = '';
         this.value = null;
         this.children = [];
-        this.parent = null;
     }
 }
 
@@ -199,9 +198,7 @@ function compileTemplate(template, templatePath = '')
  * @param {Fragment[]} fragments fragments to be classified
  */
 function classifyFragments(fragments)
-{
-    fragments = cloneDeep(fragments);
-    
+{  
     for(const fragment of fragments)
     {
         if(fragment.type != '')
@@ -289,7 +286,6 @@ function createFragmentRelations(fragments, sourceTemplate, templatePath)
 function _createFragmentRelations(fragments, sourceTemplate, templatePath, recursionPayload = null)
 {
     const result = [];
-    fragments = cloneDeep(fragments);
 
     //This loop consumes the array by removing element at index 0
     //every iteration. This will move all fragments between a control
