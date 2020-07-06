@@ -148,7 +148,7 @@ function processTemplateMany(template, contexts, templatePath = '')
         throw new Error('template must be either a CompiledTemplate or a template string!');
     }
 
-    if (typeof contexts != 'array')
+    if (!Array.isArray(contexts))
     {
         throw new Error('Context must be an array of objects!');
     }
